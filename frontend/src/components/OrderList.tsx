@@ -24,7 +24,7 @@ export function OrderList() {
       orders.sort((a, b) => b.updatedAt - a.updatedAt);
       setOrders(orders);
     } catch (error) {
-      console.error('Erro ao carregar pedidos:', error);
+      console.error('Error loading orders:', error);
     } finally {
       setIsLoading(false);
     }
@@ -49,9 +49,9 @@ export function OrderList() {
   const getStatusText = (status: OrderRecord['syncStatus']) => {
     switch (status) {
       case 'LOCAL_ONLY': return 'Local';
-      case 'SYNCED': return 'Sincronizado';
-      case 'ERROR': return 'Erro';
-      default: return 'Desconhecido';
+      case 'SYNCED': return 'Synced';
+      case 'ERROR': return 'Error';
+      default: return 'Unknown';
     }
   };
 
@@ -70,7 +70,7 @@ export function OrderList() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Lista de Pedidos</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Order List</h2>
         
         <div className="flex gap-2 mb-4">
           {(['all', 'LOCAL_ONLY', 'SYNCED', 'ERROR'] as const).map((statusFilter) => (
@@ -83,7 +83,7 @@ export function OrderList() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              {statusFilter === 'all' ? 'Todos' : getStatusText(statusFilter)}
+              {statusFilter === 'all' ? 'All' : getStatusText(statusFilter)}
             </button>
           ))}
         </div>
@@ -91,8 +91,8 @@ export function OrderList() {
 
       {orders.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">Nenhum pedido encontrado</p>
-          <p className="text-gray-400 mt-2">Crie seu primeiro pedido para começar</p>
+          <p className="text-gray-500 text-lg">No orders found</p>
+          <p className="text-gray-400 mt-2">Create your first order to get started</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -100,9 +100,9 @@ export function OrderList() {
             <div key={order.externalId} className="bg-white rounded-lg shadow-md p-6">
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Pedido #{order.externalId.slice(0, 8)}</h3>
+                  <h3 className="text-lg font-semibold text-gray-800">Order #{order.externalId.slice(0, 8)}</h3>
                   <p className="text-sm text-gray-500">
-                    {new Date(order.updatedAt).toLocaleString('pt-BR')}
+                    {new Date(order.updatedAt).toLocaleString()}
                   </p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.syncStatus)}`}>
@@ -113,7 +113,7 @@ export function OrderList() {
               <div className="border-t pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Cliente</p>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Customer</p>
                     <p className="text-gray-600">
                       {(order.data as any)?.customer || 'N/A'}
                     </p>
@@ -121,13 +121,13 @@ export function OrderList() {
                   <div>
                     <p className="text-sm font-medium text-gray-700 mb-1">Total</p>
                     <p className="text-lg font-semibold text-gray-800">
-                      R$ {(order.data as any)?.total?.toFixed(2) || '0.00'}
+                      $ {(order.data as any)?.total?.toFixed(2) || '0.00'}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Itens</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Items</p>
                   <div className="space-y-2">
                     {((order.data as any)?.items || []).map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-center text-sm">
@@ -135,7 +135,7 @@ export function OrderList() {
                           {item.qty}x {item.sku}
                         </span>
                         <span className="text-gray-800 font-medium">
-                          R$ {(item.qty * item.price).toFixed(2)}
+                          $ {(item.qty * item.price).toFixed(2)}
                         </span>
                       </div>
                     ))}

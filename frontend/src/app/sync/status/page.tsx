@@ -5,10 +5,10 @@ export default function SyncStatusPage() {
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Status de Sincronização
+          Sync Status
         </h1>
         <p className="text-gray-600">
-          Monitoramento em tempo real da fila de sincronização e estatísticas
+          Real-time monitoring of sync queue and statistics
         </p>
       </div>
       

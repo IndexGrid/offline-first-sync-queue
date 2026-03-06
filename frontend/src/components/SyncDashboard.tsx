@@ -17,7 +17,7 @@ export function SyncDashboard() {
       items.sort((a, b) => b.createdAt - a.createdAt);
       setSyncItems(items);
     } catch (error) {
-      console.error('Erro ao carregar itens da fila:', error);
+      console.error('Error loading queue items:', error);
     } finally {
       setIsLoading(false);
     }
@@ -53,11 +53,11 @@ export function SyncDashboard() {
 
   const getStatusText = (status: SyncQueueItem['status']) => {
     switch (status) {
-      case 'PENDING': return 'Pendente';
-      case 'IN_FLIGHT': return 'Em Envio';
-      case 'ACKED': return 'Confirmado';
-      case 'DEAD': return 'Falhou';
-      default: return 'Desconhecido';
+      case 'PENDING': return 'Pending';
+      case 'IN_FLIGHT': return 'In Flight';
+      case 'ACKED': return 'Confirmed';
+      case 'DEAD': return 'Failed';
+      default: return 'Unknown';
     }
   };
 
@@ -83,7 +83,7 @@ export function SyncDashboard() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">Dashboard de Sincronização</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Sync Dashboard</h2>
         
         <div className="flex items-center gap-4 mb-6">
           <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${
@@ -101,7 +101,7 @@ export function SyncDashboard() {
             onClick={loadSyncItems}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
           >
-            Atualizar
+            Refresh
           </button>
         </div>
       </div>
@@ -115,35 +115,35 @@ export function SyncDashboard() {
         
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
-          <div className="text-sm text-gray-600">Pendentes</div>
+          <div className="text-sm text-gray-600">Pending</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="text-2xl font-bold text-blue-600">{stats.inFlight}</div>
-          <div className="text-sm text-gray-600">Em Envio</div>
+          <div className="text-sm text-gray-600">In Flight</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="text-2xl font-bold text-green-600">{stats.acked}</div>
-          <div className="text-sm text-gray-600">Confirmados</div>
+          <div className="text-sm text-gray-600">Confirmed</div>
         </div>
         
         <div className="bg-white p-4 rounded-lg shadow-md">
           <div className="text-2xl font-bold text-red-600">{stats.dead}</div>
-          <div className="text-sm text-gray-600">Falhados</div>
+          <div className="text-sm text-gray-600">Failed</div>
         </div>
       </div>
 
       {/* Lista de Itens */}
       <div className="bg-white rounded-lg shadow-md">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-800">Fila de Sincronização</h3>
+          <h3 className="text-lg font-semibold text-gray-800">Sync Queue</h3>
         </div>
         
         {syncItems.length === 0 ? (
           <div className="p-6 text-center">
-            <p className="text-gray-500 text-lg">Nenhum item na fila de sincronização</p>
-            <p className="text-gray-400 mt-2">Crie pedidos para ver itens aparecer aqui</p>
+            <p className="text-gray-500 text-lg">No items in sync queue</p>
+            <p className="text-gray-400 mt-2">Create orders to see items appear here</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -161,16 +161,16 @@ export function SyncDashboard() {
                     </div>
                     
                     <div className="text-sm text-gray-600">
-                      <p>Criado: {new Date(item.createdAt).toLocaleString('pt-BR')}</p>
+                      <p>Created: {new Date(item.createdAt).toLocaleString()}</p>
                       {item.nextAttemptAt < Number.MAX_SAFE_INTEGER && (
-                        <p>Próxima tentativa: {new Date(item.nextAttemptAt).toLocaleString('pt-BR')}</p>
+                        <p>Next attempt: {new Date(item.nextAttemptAt).toLocaleString()}</p>
                       )}
                     </div>
                   </div>
                   
                   <div className="text-right">
                     <div className="text-sm text-gray-500 mb-1">
-                      Tentativas: {item.retryCount}/10
+                      Attempts: {item.retryCount}/10
                     </div>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ export function SyncDashboard() {
                 {item.lastError && (
                   <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
                     <p className="text-sm text-red-700">
-                      <strong>Erro:</strong> {item.lastError}
+                      <strong>Error:</strong> {item.lastError}
                     </p>
                   </div>
                 )}
@@ -187,7 +187,7 @@ export function SyncDashboard() {
                   <div className="mt-3">
                     <div className="flex items-center gap-2 text-blue-600">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span className="text-sm font-medium">Enviando...</span>
+                      <span className="text-sm font-medium">Sending...</span>
                     </div>
                   </div>
                 )}
