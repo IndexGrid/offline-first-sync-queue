@@ -1,201 +1,174 @@
-# Sistema POS Offline-First com Sincronização Batch
+# Offline-First POS System with Batch Sync
 
-Este projeto implementa um sistema de ponto de venda (POS) com suporte **offline-first** e sincronização batch automática. O sistema permite criar pedidos mesmo sem conexão com internet e sincroniza automaticamente quando a conexão é restaurada.
+[![CI](https://github.com/IndexGrid/offline-first-sync-queue/actions/workflows/ci.yml/badge.svg)](https://github.com/IndexGrid/offline-first-sync-queue/actions/workflows/ci.yml)
 
-## 🚀 Funcionalidades
+This project implements a Point of Sale (POS) system with **offline-first** support and automatic batch synchronization. The system allows creating orders even without an internet connection and automatically synchronizes once the connection is restored.
+
+## 📁 Repository Structure
+
+```text
+.
+├── frontend/               # Next.js web application
+│   ├── src/
+│   │   ├── components/    # UI Components (OrderForm, SyncDashboard, etc.)
+│   │   ├── lib/
+│   │   │   ├── db.ts      # IndexedDB schema and configuration
+│   │   │   └── sync/      # Sync engine (runner, enqueue, retry, lock)
+│   │   └── app/           # Next.js App Router pages
+│   └── .env.example       # Frontend environment template
+├── frontend/backend/       # NestJS API application
+│   ├── src/
+│   │   ├── pos-sync/      # Core logic (Controller, Service, Repo)
+│   │   └── main.ts        # Entry point
+│   └── .env.example       # Backend environment template
+├── docker-compose.yml      # Infrastructure orchestration
+├── init.sql                # PostgreSQL initial schema
+└── README.md               # Documentation
+```
+
+## 🚀 Features
 
 ### Frontend (Next.js + IndexedDB)
-- ✅ **Criação de pedidos offline** - Funciona sem conexão com internet
-- ✅ **Fila de sincronização** - Gerenciamento inteligente de fila local com estados
-- ✅ **Sincronização batch** - Envio em lote otimizado com retry automático
-- ✅ **Dashboard de monitoramento** - Visualização em tempo real do status de sincronização
-- ✅ **Deduplicação local** - Previne duplicação de pedidos por double-click
-- ✅ **Tratamento robusto de falhas** - Retry com backoff exponencial e jitter
+- ✅ **Offline Order Creation** - Works without an internet connection.
+- ✅ **Sync Queue** - Intelligent local queue management with states.
+- ✅ **Batch Sync** - Optimized batch sending with automatic retry.
+- ✅ **Monitoring Dashboard** - Real-time visualization of sync status.
+- ✅ **Local Deduplication** - Prevents duplicate orders from double-clicks.
+- ✅ **Robust Error Handling** - Retry with exponential backoff and jitter.
 
 ### Backend (NestJS + PostgreSQL)
-- ✅ **API REST idempotente** - Processamento seguro com `externalId` único
-- ✅ **Validação por item** - Cada item é validado individualmente sem afetar o batch
-- ✅ **Upsert inteligente** - Detecta criação, atualização ou duplicação
-- ✅ **Integração PostgreSQL** - Armazenamento persistente com índices otimizados
+- ✅ **Idempotent REST API** - Secure processing with unique `externalId`.
+- ✅ **Per-item Validation** - Each item is validated individually without affecting the whole batch.
+- ✅ **Smart Upsert** - Detects creation, update, or duplication.
+- ✅ **PostgreSQL Integration** - Persistent storage with optimized indexes.
 
-## 🏗️ Arquitetura
+## 📡 API Contract
 
+### Batch Synchronization
+`POST /admin/pos/sync`
+
+**Request Body:**
+```json
+{
+  "deviceId": "pos-001",
+  "orders": [
+    {
+      "externalId": "550e8400-e29b-41d4-a716-446655440000",
+      "data": {
+        "items": [{"sku": "PROD001", "qty": 2, "price": 10.00}],
+        "total": 20.00,
+        "customer": "John Doe"
+      }
+    },
+    {
+      "externalId": "invalid-uuid",
+      "data": { "items": [], "total": 0 }
+    }
+  ]
+}
 ```
-Frontend (Next.js)              Backend (NestJS)
-┌─────────────────┐             ┌─────────────────┐
-│  OrderForm      │             │  PosSyncController
-│  OrderList      │◄────────────┤  PosSyncService
-│  SyncDashboard  │             │  OrdersRepo
-└─────────────────┘             └─────────────────┘
-         │                               │
-         ▼                               ▼
-┌─────────────────┐             ┌─────────────────┐
-│  IndexedDB      │             │  PostgreSQL
-│  - orders       │             │  - orders table
-│  - syncQueue    │             │  - external_id UNIQUE
-│  - dedupe       │             └─────────────────┘
-└─────────────────┘
+
+**Response Body (201 Created):**
+```json
+{
+  "results": [
+    {
+      "externalId": "550e8400-e29b-41d4-a716-446655440000",
+      "status": "created" 
+    },
+    {
+      "externalId": "invalid-uuid",
+      "status": "invalid",
+      "reason": "externalId must be a UUID"
+    }
+  ]
+}
 ```
+*Possible statuses: `created`, `updated`, `duplicate`, `invalid`, `auth_required`, `error`.*
 
-## 📋 Fluxo de Trabalho
+## 📋 Workflow
 
-### 1. Criação de Pedido Offline
-1. Usuário preenche formulário de pedido
-2. Sistema gera `externalId` (UUID v4) no cliente
-3. Pedido é salvo no IndexedDB com status `LOCAL_ONLY`
-4. Evento de sincronização é criado na fila com status `PENDING`
-5. Confirmação imediata é mostrada ao usuário
+### 1. Offline Order Creation
+1. User fills out the order form.
+2. System generates a unique `externalId` (UUID v4) on the client.
+3. Order is saved in IndexedDB with `LOCAL_ONLY` status.
+4. A synchronization event is created in the queue with `PENDING` status.
+5. Immediate confirmation is shown to the user.
 
-### 2. Sincronização Batch
-1. Runner detecta conexão online ou intervalo (15s)
-2. Coleta até 50 itens `PENDING` da fila local
-3. Agrupa por endpoint e divide em chunks (máx. 256KB)
-4. Envia batch para backend com compressão gzip opcional
-5. Processa resposta item por item atualizando estados locais
-6. Marca pedidos como `SYNCED` ou `ERROR` conforme resposta
+### 2. Batch Synchronization
+1. Runner detects an online connection or interval (15s).
+2. Collects up to 50 `PENDING` items from the local queue.
+3. Groups by endpoint and splits into chunks (max 256KB).
+4. Sends the batch to the backend with optional gzip compression.
+5. Processes the response item by item, updating local states.
+6. Marks orders as `SYNCED` or `ERROR` based on the response.
 
-### 3. Tratamento de Falhas
-- **Erros de rede (5xx, 429, timeout)**: Agendam retry com backoff exponencial
-- **Erros de autenticação (401/403)**: Pausam sincronização por 60 segundos
-- **Erros de validação (400)**: Marcam item como `DEAD` sem retry
-- **Após 10 tentativas**: Item é marcado como `DEAD` para revisão manual
+## 🛠️ Installation and Execution
 
-## 🛠️ Instalação e Execução
-
-### Pré-requisitos
-- Node.js 18+
-- Docker e Docker Compose
-- PostgreSQL 16 (ou use Docker)
-
-### Opção 1: Docker Compose (Recomendado)
+### Option 1: Docker Compose (Recommended)
 
 ```bash
-# Clone o repositório
-git clone <url-do-repositorio>
+# Clone the repository
+git clone https://github.com/IndexGrid/offline-first-sync-queue.git
 cd offline-first-sync-queue
 
-# Inicie todos os serviços
-docker-compose up -d
-
-# Acesse a aplicação
-Frontend: http://localhost:3000
-Backend: http://localhost:3001
-PostgreSQL: localhost:5432
+# Start all services
+docker-compose up -d --build
 ```
 
-### Opção 2: Desenvolvimento Local
+### Option 2: Local Development
 
-```bash
-# Frontend
-cd frontend
-npm install
-npm run dev
+1. **Setup Backend**:
+   ```bash
+   cd frontend/backend
+   cp .env.example .env
+   npm install
+   npm run start:dev
+   ```
+2. **Setup Frontend**:
+   ```bash
+   cd frontend
+   cp .env.example .env.local
+   npm install
+   npm run dev
+   ```
 
-# Backend (em outro terminal)
-cd frontend/backend
-npm install
-npm run start:dev
+## 🧪 Testing Scenarios
 
-# Configure PostgreSQL e crie o banco de dados
-# Execute o script SQL em init.sql
-```
+### 1. Happy Path (Online)
+- Create an order at `http://localhost:3000`.
+- Observe the order list: status should transition from `LOCAL_ONLY` to `SYNCED` within seconds.
+- Verify in database: `docker exec -it postgres psql -U postgres -d app -c "SELECT * FROM orders;"`
 
-## 📊 Testes
+### 2. Offline Resilience
+- Turn off your internet or set Chrome DevTools to **Offline**.
+- Create 3 orders. They will remain as `LOCAL_ONLY`.
+- Check `http://localhost:3000/sync/status` to see 3 items in `PENDING` state.
+- Restore connection. Observe automatic synchronization.
 
-### Frontend Tests
-```bash
-cd frontend
-npm install -D vitest @testing-library/react @testing-library/jest-dom
-npm run test
-```
+### 3. Idempotency & Conflict
+- The system prevents duplicates even if the same request is sent twice (e.g., network retry).
+- The backend uses `ON CONFLICT (external_id) DO UPDATE` to ensure consistency.
 
-### Backend Tests
-```bash
-cd frontend/backend
-npm run test
-```
+## 🧠 Design Decisions & Trade-offs
 
-## 🔧 Configuração
+| Decision | Rationale |
+| :--- | :--- |
+| **IndexedDB vs localStorage** | IndexedDB is asynchronous, supports larger data volumes, and allows complex indexing, which is essential for a sync queue. |
+| **Batch size (50)** | Balances request overhead and payload size. Prevents timeouts while keeping throughput high. |
+| **Payload limit (256KB)** | Avoids hitting default server body-parser limits and ensures reliable transmission on weak connections. |
+| **Dedupe best-effort** | Uses FNV-1a hashing on the client with a 2-second window to prevent UI-level accidental double-submissions. |
+| **Single-tab locking** | To prevent race conditions where multiple tabs try to process the same sync queue simultaneously. |
 
-### Variáveis de Ambiente
+## 🚨 Known Limitations
 
-**Frontend:**
-- `NEXT_PUBLIC_API_BASE_URL`: URL do backend (default: http://localhost:3001)
+- **No CRDT/merge**: Eventual consistency only. Last-write-wins at the record level.
+- **No Service Worker**: Synchronization only happens while the app is open in a tab.
 
-**Backend:**
-- `DATABASE_URL`: String de conexão PostgreSQL
-- `PORT`: Porta do servidor (default: 3001)
-- `FRONTEND_URL`: URL do frontend para CORS
+## 🤝 Contributing
 
-### Parâmetros de Sincronização
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
-- **Batch size**: 50 itens por requisição
-- **Max retries**: 10 tentativas
-- **Retry backoff**: Exponencial com jitter (máx. 60s)
-- **Payload limit**: 256KB por requisição
-- **Sync interval**: 15 segundos
-- **Stale timeout**: 60 segundos para itens `IN_FLIGHT`
+## 📄 License
 
-## 📱 Uso
-
-### Criar Pedido Offline
-1. Acesse http://localhost:3000
-2. Clique em "Novo Pedido"
-3. Preencha os dados do cliente e itens
-4. Clique em "Criar Pedido"
-5. O pedido é salvo localmente imediatamente
-
-### Monitorar Sincronização
-1. Acesse http://localhost:3000/sync/status
-2. Visualize estatísticas em tempo real
-3. Monitore itens pendentes, em progresso e falhados
-4. Veja detalhes de erros e retry counts
-
-### Simular Offline
-1. Desconecte da internet ou use ferramentas de desenvolvedor
-2. Crie pedidos normalmente
-3. Observe que eles ficam com status "Local"
-4. Reconecte e veja a sincronização automática
-
-## 🔒 Segurança
-
-- **Idempotência**: Cada pedido tem `externalId` único gerado no cliente
-- **Validação**: Backend valida cada item individualmente
-- **CORS**: Configurado para aceitar apenas frontend autorizado
-- **PostgreSQL**: Conexão segura com pool de conexões
-
-## 📈 Performance
-
-- **IndexedDB**: Armazenamento local rápido e confiável
-- **Batch processing**: Reduz chamadas de rede
-- **Compressão gzip**: Reduz tamanho dos payloads
-- **Índices otimizados**: Queries rápidas no PostgreSQL
-- **Jitter**: Evita thundering herd em reconexões
-
-## 🚨 Limitações Conhecidas
-
-- **Sem CRDT/merge**: Consistência eventual apenas
-- **Conflitos de edição**: Não resolvidos automaticamente
-- **Dedupe local**: Best-effort com janela curta (2s)
-- **Single-tab**: Locking funciona apenas em uma aba
-- **Sem Service Worker**: Background sync não implementado
-
-## 🤝 Contribuindo
-
-1. Faça fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
-## 🙏 Agradecimentos
-
-- [Next.js](https://nextjs.org/) - Framework React
-- [NestJS](https://nestjs.com/) - Framework Node.js
-- [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) - API de banco de dados do navegador
-- [PostgreSQL](https://www.postgresql.org/) - Banco de dados relacional
-- [Tailwind CSS](https://tailwindcss.com/) - Framework CSS
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
