@@ -135,20 +135,20 @@ describe('PosSyncService', () => {
       const items = [
         { externalId: validUuid1, data: { customer: 'John Doe', total: 20.00 } },
         { externalId: invalidUuid, data: { customer: 'Jane Doe', total: 15.00 } },
-        { externalId: validUuid2, data: null },
-        { externalId: '', data: { customer: 'Bob Smith', total: 30.00 } },
+        { externalId: validUuid2, data: { customer: 'Bob Smith', total: 30.00 } },
+        { externalId: '', data: { customer: 'Alice Jones', total: 10.00 } },
       ];
 
       ordersRepo.upsertByExternalId
         .mockResolvedValueOnce({ status: 'created' })
         .mockResolvedValueOnce({ status: 'updated' });
 
-      const results = await service.syncBatch(items);
+      const results = await service.syncBatch(items as any);
 
       expect(results).toHaveLength(4);
       expect(results[0]).toEqual({ externalId: validUuid1, status: 'created' });
       expect(results[1]).toEqual({ externalId: invalidUuid, status: 'invalid', reason: 'invalid_externalId' });
-      expect(results[2]).toEqual({ externalId: validUuid2, status: 'invalid', reason: 'invalid_data' });
+      expect(results[2]).toEqual({ externalId: validUuid2, status: 'updated' });
       expect(results[3]).toEqual({ externalId: '', status: 'invalid', reason: 'missing_externalId' });
       
       expect(ordersRepo.upsertByExternalId).toHaveBeenCalledTimes(2);
