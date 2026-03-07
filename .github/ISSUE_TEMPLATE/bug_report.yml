@@ -1,0 +1,107 @@
+name: Bug report
+description: Report a reproducible defect in sync, queue, API, or documentation behavior.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug.
+
+        Use this form for reproducible defects. For vulnerabilities or secret leaks, do **not** open a public issue — follow `SECURITY.md`.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What is broken?
+      placeholder: Clear one-paragraph description of the problem.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide exact steps so the bug can be reproduced.
+      placeholder: |
+        1. Start frontend/backend
+        2. Open the POS flow
+        3. Go offline
+        4. Create two orders
+        5. Reconnect
+        6. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Frontend UI
+        - IndexedDB / local queue
+        - Sync runner / retry
+        - Backend API
+        - PostgreSQL / persistence
+        - Documentation
+        - CI / workflow
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: reliability
+    attributes:
+      label: Reliability characteristics
+      description: Mark all that apply.
+      options:
+        - label: Happens only while offline
+        - label: Happens on reconnect
+        - label: Involves duplicate writes or duplicate enqueue
+        - label: Involves partial batch success/failure
+        - label: Involves stuck IN_FLIGHT or retry behavior
+        - label: Involves payload size or chunk splitting
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, OS, Node version, database, or anything else relevant.
+      placeholder: Chrome 145 / Windows 10 / Node 20 / PostgreSQL 16
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, or traces
+      description: Paste relevant output. Remove secrets.
+      render: shell
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues first.
+          required: true
+        - label: I removed secrets and sensitive data from the report.
+          required: true
+        - label: This is not a security vulnerability report.
+          required: true

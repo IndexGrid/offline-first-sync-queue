@@ -1,0 +1,77 @@
+name: Feature request
+description: Propose a new capability or improvement for the offline-first sync architecture.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for meaningful improvements.
+
+        Good requests explain the problem, not just the desired implementation.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem exists today?
+      placeholder: Describe the limitation, failure mode, or missing capability.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should change?
+      placeholder: Describe the proposed behavior or interface.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider?
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - Queue semantics
+        - Retry / backoff
+        - Endpoint grouping
+        - Payload management
+        - Idempotency / deduplication
+        - API contract
+        - Observability
+        - Developer experience
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: tradeoffs
+    attributes:
+      label: Risks and trade-offs
+      description: What could get worse?
+      placeholder: Complexity, performance, API compatibility, operational risk, etc.
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence or references
+      description: Benchmarks, examples, production scenarios, or related prior art.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and pull requests first.
+          required: true
+        - label: This request is specific to this repository's scope.
+          required: true
