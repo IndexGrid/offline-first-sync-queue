@@ -6,11 +6,7 @@ import { PrismaService } from '../prisma.service';
 
 @Module({
   controllers: [PosSyncController],
-  providers: [
-    PosSyncService,
-    OrdersRepo,
-    PrismaService,
-  ],
+  providers: [PosSyncService, OrdersRepo, PrismaService],
   exports: [PosSyncService],
 })
 export class PosSyncModule {}

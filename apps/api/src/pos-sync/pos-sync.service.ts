@@ -1,10 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { isUUID } from 'class-validator';
 import { OrdersRepo } from './orders.repo';
-import { 
-  SyncBatchRequest, 
-  SyncBatchResponse, 
-  SyncResultStatus 
+import {
+  SyncBatchRequest,
+  SyncBatchResponse,
 } from '@offline-pos/sync-contract';
 
 @Injectable()
@@ -32,9 +30,12 @@ export class PosSyncService {
       const externalId = item.externalId;
 
       try {
-        const r = await this.orders.upsertByExternalId(externalId, item.payload);
+        const r = await this.orders.upsertByExternalId(
+          externalId,
+          item.payload,
+        );
         results.push({ externalId, status: r.status });
-        
+
         // Section 8.6: per-status response distribution
         this.logger.debug({
           message: 'Item processed',
@@ -46,13 +47,15 @@ export class PosSyncService {
         this.logger.error({
           message: 'Error syncing item',
           externalId,
-          error: error instanceof Error ? error.message : 'internal_server_error',
+          error:
+            error instanceof Error ? error.message : 'internal_server_error',
           stack: error instanceof Error ? error.stack : undefined,
         });
-        results.push({ 
-          externalId, 
-          status: 'error', 
-          reason: error instanceof Error ? error.message : 'internal_server_error' 
+        results.push({
+          externalId,
+          status: 'error',
+          reason:
+            error instanceof Error ? error.message : 'internal_server_error',
         });
       }
     }

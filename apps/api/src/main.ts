@@ -7,13 +7,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: ['error', 'warn', 'log', 'debug', 'verbose'],
   });
-  
+
   // Section 5.2: Validate payloads at transport boundary
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   // Enable CORS for frontend
   app.enableCors({
@@ -25,4 +27,7 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`Application is running on: http://localhost:${port}`);
 }
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Fatal error during bootstrap', err);
+  process.exit(1);
+});

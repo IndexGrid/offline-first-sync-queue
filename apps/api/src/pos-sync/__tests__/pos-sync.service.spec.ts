@@ -33,7 +33,7 @@ describe('PosSyncService', () => {
           {
             externalId: validUuid,
             entityType: 'order',
-            payload: { customer: 'John Doe', total: 20.00 },
+            payload: { customer: 'John Doe', total: 20.0 },
           },
         ],
       };
@@ -47,6 +47,7 @@ describe('PosSyncService', () => {
         externalId: validUuid,
         status: 'created',
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(ordersRepo.upsertByExternalId).toHaveBeenCalledWith(
         validUuid,
         input.items[0].payload,
@@ -61,12 +62,14 @@ describe('PosSyncService', () => {
           {
             externalId: validUuid,
             entityType: 'order',
-            payload: { customer: 'John Doe', total: 20.00 },
+            payload: { customer: 'John Doe', total: 20.0 },
           },
         ],
       };
 
-      ordersRepo.upsertByExternalId.mockRejectedValue(new Error('Database error'));
+      ordersRepo.upsertByExternalId.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       const { results } = await service.syncBatch(input);
 
@@ -85,8 +88,16 @@ describe('PosSyncService', () => {
       const input: SyncBatchRequest = {
         deviceId: 'pos-001',
         items: [
-          { externalId: validUuid1, entityType: 'order', payload: { customer: 'John', total: 10 } },
-          { externalId: validUuid2, entityType: 'order', payload: { customer: 'Jane', total: 20 } },
+          {
+            externalId: validUuid1,
+            entityType: 'order',
+            payload: { customer: 'John', total: 10 },
+          },
+          {
+            externalId: validUuid2,
+            entityType: 'order',
+            payload: { customer: 'Jane', total: 20 },
+          },
         ],
       };
 
@@ -99,7 +110,8 @@ describe('PosSyncService', () => {
       expect(results).toHaveLength(2);
       expect(results[0]).toEqual({ externalId: validUuid1, status: 'created' });
       expect(results[1]).toEqual({ externalId: validUuid2, status: 'updated' });
-      
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(ordersRepo.upsertByExternalId).toHaveBeenCalledTimes(2);
     });
   });

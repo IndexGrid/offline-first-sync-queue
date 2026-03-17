@@ -12,17 +12,23 @@ export class OrdersRepo {
    */
   async upsertByExternalId(
     externalId: string,
-    payload: any,
+    payload: unknown,
   ): Promise<{ status: SyncResultStatus }> {
     // Check for existing record to determine status correctly (created vs updated vs duplicate)
-    const existing = await this.prisma.order.findUnique({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+    const orderDelegate = (this.prisma as any).order;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    const existing = (await orderDelegate.findUnique({
       where: { externalId },
-    });
+    })) as { payload: unknown } | null;
 
     if (!existing) {
-      await this.prisma.order.create({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      await orderDelegate.create({
         data: {
           externalId,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           payload: payload as any,
           syncStatus: 'SYNCED',
         },
@@ -37,9 +43,11 @@ export class OrdersRepo {
     }
 
     // If payload changed, it's an update
-    await this.prisma.order.update({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    await orderDelegate.update({
       where: { externalId },
       data: {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         payload: payload as any,
         syncStatus: 'SYNCED',
       },

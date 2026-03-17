@@ -359,7 +359,7 @@ async function sendOneBatch(opts: {
         if (nextRetry > maxRetries) {
           await q.put({
             ...item,
-            status: 'DEAD',
+            status: 'DEAD_LETTER',
             nextAttemptAt: Number.MAX_SAFE_INTEGER,
             inFlightAt: undefined,
             lastError: 'missing_result',
@@ -373,7 +373,7 @@ async function sendOneBatch(opts: {
           const next = computeNextAttemptAt(nextRetry);
           await q.put({
             ...item,
-            status: 'PENDING',
+            status: 'RETRYABLE_ERROR',
             inFlightAt: undefined,
             retryCount: nextRetry,
             nextAttemptAt: next,
