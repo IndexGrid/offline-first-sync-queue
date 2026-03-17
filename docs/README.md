@@ -12,10 +12,10 @@ This directory contains the detailed documentation for the Offline-First POS Sys
 ├── packages/
 │   └── sync-contract/     # Shared Zod schemas & TS types
 ├── infra/
+│   ├── db/                # DB init scripts (for local dev)
 │   └── docker-compose.yml # Orchestration
 └── docs/
     ├── ADR/               # Architectural Decision Records
-    ├── RUNBOOK.md         # Operational Guide
     └── README.md          # You are here
 ```
 
