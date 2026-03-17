@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { getDB } from '../db';
+import 'fake-indexeddb/auto';
+import { getDB } from '../../db';
 import { enqueueOrder } from '../enqueue';
 
 describe('enqueueOrder', () => {
@@ -40,8 +41,10 @@ describe('enqueueOrder', () => {
     // Check order was created
     const order = await db.get('orders', result.externalId);
     expect(order).toBeDefined();
-    expect(order.data).toEqual(orderData);
-    expect(order.syncStatus).toBe('LOCAL_ONLY');
+    if (order) {
+      expect(order.data).toEqual(orderData);
+      expect(order.syncStatus).toBe('LOCAL_ONLY');
+    }
 
     // Check sync queue item was created
     const syncItems = await db.getAll('syncQueue');
