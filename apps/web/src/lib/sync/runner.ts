@@ -195,7 +195,15 @@ export async function runSyncOnce(opts: {
     }
     await tx.done;
 
-    if (pending.length === 0) return { sent: 0, acked: 0, dead: 0 };
+    // Section 8.1: queue depth signal
+    const pendingCount = pending.length;
+    console.debug('[SyncRunner] Starting batch', {
+      now,
+      pendingCount,
+      batchSize,
+    });
+
+    if (pendingCount === 0) return { sent: 0, acked: 0, dead: 0 };
 
     /**
      * Correção importante: NÃO assuma que o batch inteiro usa o mesmo endpoint.
@@ -465,6 +473,15 @@ async function sendOneBatch(opts: {
     }
 
     await tx3.done;
+
+    // Section 8.5: per-status distribution telemetry
+    console.info('[SyncRunner] Batch completed', {
+      endpoint,
+      itemsCount: items.length,
+      acked,
+      dead,
+    });
+
     return { sent: items.length, acked, dead };
   } catch (err) {
     // Erro de rede/parse -> retry geral

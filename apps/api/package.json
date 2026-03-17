@@ -11,7 +11,7 @@
     "url": "https://github.com/IndexGrid/offline-first-sync-queue.git"
   },
   "dependencies": {
-    "@offline-pos/sync-contract": "workspace:*",
+    "@offline-pos/sync-contract": "*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
