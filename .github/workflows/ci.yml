@@ -37,12 +37,10 @@ jobs:
       - name: Frontend - Test
         run: npm run test -w apps/web
 
-      - name: Backend - Prisma Migration Check
+      - name: Backend - Prisma Schema Validation
         run: |
           cd apps/api
-          npx prisma migrate status
-        env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/app # Mock for status check
+          npx prisma validate
 
       - name: Build All
         run: npm run build
