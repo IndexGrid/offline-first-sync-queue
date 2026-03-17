@@ -33,7 +33,6 @@ export function OrderList() {
   useEffect(() => {
     void loadOrders();
     // Recarregar a cada 5 segundos para mostrar mudanças de status
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     const interval = setInterval(loadOrders, 5000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps

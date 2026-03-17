@@ -18,8 +18,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: package-lock.json
       
-      - name: Install root dependencies
-        run: npm ci
+      - name: Clean and Install dependencies
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Build Shared Contract
         run: npm run build -w packages/sync-contract

@@ -11,6 +11,17 @@
   },
   "license": "MIT",
   "repository": "https://github.com/IndexGrid/offline-first-sync-queue",
+  "optionalDependencies": {
+    "lightningcss-linux-x64-gnu": "^1.22.1",
+    "lightningcss-linux-x64-musl": "^1.22.1",
+    "lightningcss-win32-x64-msvc": "^1.22.1",
+    "@next/swc-linux-x64-gnu": "16.1.6",
+    "@next/swc-linux-x64-musl": "16.1.6",
+    "@next/swc-win32-x64-msvc": "16.1.6",
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.0.0",
+    "@tailwindcss/oxide-linux-x64-musl": "^4.0.0",
+    "@tailwindcss/oxide-win32-x64-msvc": "^4.0.0"
+  },
   "scripts": {
     "build": "npm run build -w packages/sync-contract && npm run build -w apps/api && npm run build -w apps/web",
     "test": "npm run test -w apps/api && npm run test -w apps/web",
