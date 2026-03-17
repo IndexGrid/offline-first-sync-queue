@@ -1,14 +1,21 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import 'fake-indexeddb/auto';
 import { computeNextAttemptAt, shouldRetry } from '../retry';
 
 describe('computeNextAttemptAt', () => {
   it('should increase delay with retry count', () => {
-    const attempt1 = computeNextAttemptAt(0);
-    const attempt2 = computeNextAttemptAt(1);
-    const attempt3 = computeNextAttemptAt(2);
+    vi.spyOn(Math, 'random').mockReturnValue(1.0); // Use max jitter for test
+    const now = 1000000;
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+
+    const attempt1 = computeNextAttemptAt(0); // 1000000 + 1.0 * 1000 = 1001000
+    const attempt2 = computeNextAttemptAt(1); // 1000000 + 1.0 * 2000 = 1002000
+    const attempt3 = computeNextAttemptAt(2); // 1000000 + 1.0 * 4000 = 1004000
     
     expect(attempt2).toBeGreaterThan(attempt1);
     expect(attempt3).toBeGreaterThan(attempt2);
+
+    vi.restoreAllMocks();
   });
 
   it('should cap at 60 seconds', () => {
