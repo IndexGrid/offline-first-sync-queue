@@ -27,6 +27,14 @@
     "react-dom": "19.2.3",
     "uuid": "^13.0.0"
   },
+  "optionalDependencies": {
+    "lightningcss-linux-x64-gnu": "^1.22.1",
+    "lightningcss-linux-x64-musl": "^1.22.1",
+    "lightningcss-win32-x64-msvc": "^1.22.1",
+    "@next/swc-linux-x64-gnu": "16.1.6",
+    "@next/swc-linux-x64-musl": "16.1.6",
+    "@next/swc-win32-x64-msvc": "16.1.6"
+  },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
