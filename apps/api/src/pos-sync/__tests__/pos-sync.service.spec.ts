@@ -114,5 +114,71 @@ describe('PosSyncService', () => {
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(ordersRepo.upsertByExternalId).toHaveBeenCalledTimes(2);
     });
+
+    it('should handle duplicate items', async () => {
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000';
+      const input: SyncBatchRequest = {
+        deviceId: 'pos-001',
+        items: [
+          {
+            externalId: validUuid,
+            entityType: 'order',
+            payload: { customer: 'John Doe', total: 20.0 },
+          },
+        ],
+      };
+
+      ordersRepo.upsertByExternalId.mockResolvedValue({ status: 'duplicate' });
+
+      const { results } = await service.syncBatch(input);
+
+      expect(results[0]).toEqual({
+        externalId: validUuid,
+        status: 'duplicate',
+      });
+    });
+
+    it('should handle invalid items', async () => {
+      // Note: validation usually happens in the Pipe, but the service should handle it if passed
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000';
+      const input: SyncBatchRequest = {
+        deviceId: 'pos-001',
+        items: [
+          {
+            externalId: validUuid,
+            entityType: 'order',
+            payload: { customer: 'John Doe', total: 20.0 },
+          },
+        ],
+      };
+
+      ordersRepo.upsertByExternalId.mockResolvedValue({ status: 'invalid' });
+
+      const { results } = await service.syncBatch(input);
+
+      expect(results[0].status).toBe('invalid');
+    });
+
+    it('should handle auth_required items', async () => {
+      const validUuid = '550e8400-e29b-41d4-a716-446655440000';
+      const input: SyncBatchRequest = {
+        deviceId: 'pos-001',
+        items: [
+          {
+            externalId: validUuid,
+            entityType: 'order',
+            payload: { customer: 'John Doe', total: 20.0 },
+          },
+        ],
+      };
+
+      ordersRepo.upsertByExternalId.mockResolvedValue({
+        status: 'auth_required',
+      });
+
+      const { results } = await service.syncBatch(input);
+
+      expect(results[0].status).toBe('auth_required');
+    });
   });
 });
