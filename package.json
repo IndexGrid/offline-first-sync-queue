@@ -1,0 +1,14 @@
+{
+  "name": "offline-pos-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/IndexGrid/offline-first-sync-queue"
+}

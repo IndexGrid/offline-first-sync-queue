@@ -2,13 +2,6 @@
 
 Este guia implementa um mecanismo **offline‑first** com **fila local** (IndexedDB) + **batch sync** para um backend **NestJS** com **idempotência** (via `externalId`) e **robustez** (retry/backoff, locking, resultados por item).
 
-## Regra do documento (anti-duplicação)
-- **Não existe nenhum bloco de código fora da seção “Implementação canônica”.**
-- A seção **Implementação canônica** é a **única fonte de código executável** deste doc.
-- Cada arquivo aparece **uma única vez** com código completo.
-
----
-
 ## 0) Visão do fluxo (o que você está construindo)
 
 1. **Write‑ahead local**: ao criar uma entidade (ex.: `Order`) o app salva no IndexedDB:

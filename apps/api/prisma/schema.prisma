@@ -1,0 +1,34 @@
+// Prisma schema file for the Offline POS API
+// Following AI-Driven-Implementation-technical-guide.md Section 3.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  externalId  String   @unique @map("external_id") // Section 3.4: database-enforced uniqueness invariant
+  entityType  String   @default("order") @map("entity_type")
+  payload     Json     @map("payload") // Flexible data storage
+  
+  // Section 3.5: Sync status and retry fields with indexes
+  syncStatus  String   @default("PENDING") @map("sync_status")
+  retryCount  Int      @default(0) @map("retry_count")
+  lastError   String?  @map("last_error")
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([externalId])        // Section 3.6: idempotency key lookup
+  @@index([syncStatus])        // Section 3.7: sync status lookup
+  @@index([createdAt])         // Section 3.9: created/updated ordering
+  @@index([updatedAt])
+  @@map("orders")
+}
+
+// Additional models can be added here following the same discipline.
