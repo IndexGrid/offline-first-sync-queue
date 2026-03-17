@@ -41,6 +41,8 @@ jobs:
         run: |
           cd apps/api
           npx prisma validate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/dummy
 
       - name: Build All
         run: npm run build
