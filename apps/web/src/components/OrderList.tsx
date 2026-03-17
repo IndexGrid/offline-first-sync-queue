@@ -11,18 +11,18 @@ export function OrderList() {
   const loadOrders = async () => {
     try {
       const db = await getDB();
-      let orders: OrderRecord[];
+      let ordersList: OrderRecord[];
       
       if (filter === 'all') {
-        orders = await db.getAll('orders');
+        ordersList = await db.getAll('orders');
       } else {
         const index = db.transaction('orders').store.index('by-syncStatus');
-        orders = await index.getAll(filter);
+        ordersList = await index.getAll(filter);
       }
       
       // Ordenar por updatedAt decrescente
-      orders.sort((a, b) => b.updatedAt - a.updatedAt);
-      setOrders(orders);
+      ordersList.sort((a, b) => b.updatedAt - a.updatedAt);
+      setOrders(ordersList);
     } catch (error) {
       console.error('Error loading orders:', error);
     } finally {
@@ -31,10 +31,12 @@ export function OrderList() {
   };
 
   useEffect(() => {
-    loadOrders();
+    void loadOrders();
     // Recarregar a cada 5 segundos para mostrar mudanças de status
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     const interval = setInterval(loadOrders, 5000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const getStatusColor = (status: OrderRecord['syncStatus']) => {
@@ -99,49 +101,52 @@ export function OrderList() {
           {orders.map((order) => (
             <div key={order.externalId} className="bg-white rounded-lg shadow-md p-6">
               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-800">Order #{order.externalId.slice(0, 8)}</h3>
-                  <p className="text-sm text-gray-500">
-                    {new Date(order.updatedAt).toLocaleString()}
-                  </p>
-                </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.syncStatus)}`}>
-                  {getStatusText(order.syncStatus)}
-                </span>
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Customer</p>
-                    <p className="text-gray-600">
-                      {(order.data as any)?.customer || 'N/A'}
+                    <h3 className="text-lg font-semibold text-gray-800">Order #{order.externalId.slice(0, 8)}</h3>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.updatedAt).toLocaleString()}
                     </p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Total</p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      $ {(order.data as any)?.total?.toFixed(2) || '0.00'}
-                    </p>
-                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.syncStatus)}`}>
+                    {getStatusText(order.syncStatus)}
+                  </span>
                 </div>
 
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Items</p>
-                  <div className="space-y-2">
-                    {((order.data as any)?.items || []).map((item: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center text-sm">
-                        <span className="text-gray-600">
-                          {item.qty}x {item.sku}
-                        </span>
-                        <span className="text-gray-800 font-medium">
-                          $ {(item.qty * item.price).toFixed(2)}
-                        </span>
-                      </div>
-                    ))}
+                <div className="border-t pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1">Customer</p>
+                      <p className="text-gray-600">
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        {(order.data as any)?.customer || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-700 mb-1">Total</p>
+                      <p className="text-lg font-semibold text-gray-800">
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        $ {(order.data as any)?.total?.toFixed(2) || '0.00'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Items</p>
+                    <div className="space-y-2">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {((order.data as any)?.items || []).map((item: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">
+                            {item.qty}x {item.sku}
+                          </span>
+                          <span className="text-gray-800 font-medium">
+                            $ {(item.qty * item.price).toFixed(2)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
             </div>
           ))}
         </div>

@@ -3,8 +3,6 @@ import { computeNextAttemptAt, shouldRetry } from '../retry';
 
 describe('computeNextAttemptAt', () => {
   it('should increase delay with retry count', () => {
-    const now = Date.now();
-    
     const attempt1 = computeNextAttemptAt(0);
     const attempt2 = computeNextAttemptAt(1);
     const attempt3 = computeNextAttemptAt(2);

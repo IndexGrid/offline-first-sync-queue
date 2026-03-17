@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getDB, DedupeRecord, OrderRecord, SyncQueueItem } from '../db';
 
-function stableStringify(value: any): string {
+function stableStringify(value: unknown): string {
   if (value === undefined) return '"__undefined__"';
   if (value === null) return 'null';
   if (typeof value !== 'object') return JSON.stringify(value) ?? 'null';
@@ -10,8 +10,8 @@ function stableStringify(value: any): string {
     return `[${value.map(stableStringify).join(',')}]`;
   }
 
-  const keys = Object.keys(value).sort();
-  const props = keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`);
+  const keys = Object.keys(value as object).sort();
+  const props = keys.map((k) => `${JSON.stringify(k)}:${stableStringify((value as Record<string, unknown>)[k])}`);
   return `{${props.join(',')}}`;
 }
 
