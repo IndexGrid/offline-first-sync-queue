@@ -3,8 +3,13 @@ name: CI
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ main ]
+
+permissions:
+  contents: read
 
 jobs:
   quality-gates:
@@ -49,8 +54,10 @@ jobs:
 
   release:
     needs: quality-gates
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.repository == 'IndexGrid/offline-first-sync-queue'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Create Release Draft
@@ -59,4 +66,4 @@ jobs:
           draft: true
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
