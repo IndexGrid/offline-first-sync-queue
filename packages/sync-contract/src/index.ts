@@ -38,16 +38,27 @@ export type SyncItem = z.infer<typeof SyncItemSchema>;
 /**
  * Batch sync request schema.
  */
+export const SyncBatchItemSchema = z.object({
+  externalId: z.string().uuid(),
+  entityType: z.string(),
+  payload: z.any(),
+});
+
 export const SyncBatchRequestSchema = z.object({
   deviceId: z.string(),
-  items: z.array(z.object({
-    externalId: z.string().uuid(),
-    entityType: z.string(),
-    payload: z.any()
-  }))
+  items: z.array(SyncBatchItemSchema),
 });
 
 export type SyncBatchRequest = z.infer<typeof SyncBatchRequestSchema>;
+
+export const SyncBatchRequestTransportSchema = z.object({
+  deviceId: z.string(),
+  items: z.array(z.unknown()),
+});
+
+export type SyncBatchRequestTransport = z.infer<
+  typeof SyncBatchRequestTransportSchema
+>;
 
 /**
  * Per-item sync result status.
@@ -58,6 +69,8 @@ export const SyncResultStatusSchema = z.enum([
   'duplicate',
   'invalid',
   'auth_required',
+  'retriable_error',
+  'fatal_error',
   'error'
 ]);
 
@@ -68,7 +81,7 @@ export type SyncResultStatus = z.infer<typeof SyncResultStatusSchema>;
  */
 export const SyncBatchResponseSchema = z.object({
   results: z.array(z.object({
-    externalId: z.string().uuid(),
+    externalId: z.string(),
     status: SyncResultStatusSchema,
     reason: z.string().optional()
   }))

@@ -54,7 +54,9 @@ describe('Database discipline (Prisma + Postgres)', () => {
       },
     });
 
-    expect(created.nextAttemptAt?.toISOString()).toBe(nextAttemptAt.toISOString());
+    expect(created.nextAttemptAt?.toISOString()).toBe(
+      nextAttemptAt.toISOString(),
+    );
   });
 
   it('has indexes for retry scheduling lookup', async () => {

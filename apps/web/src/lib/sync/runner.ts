@@ -431,7 +431,53 @@ async function sendOneBatch(opts: {
         continue;
       }
 
-      // Erro genérico => retry (até maxRetries)
+      if (r.status === 'fatal_error') {
+        await q.put({
+          ...item,
+          status: 'FATAL_ERROR',
+          nextAttemptAt: Number.MAX_SAFE_INTEGER,
+          inFlightAt: undefined,
+          lastError: r.reason ?? 'fatal_error',
+        });
+        if (entityType === 'order') {
+          const order = await o.get(item.externalId);
+          if (order)
+            await o.put({ ...order, syncStatus: 'ERROR', updatedAt: Date.now() });
+        }
+        dead++;
+        continue;
+      }
+
+      if (r.status === 'retriable_error') {
+        const nextRetry = item.retryCount + 1;
+        if (nextRetry > maxRetries) {
+          await q.put({
+            ...item,
+            status: 'DEAD_LETTER',
+            nextAttemptAt: Number.MAX_SAFE_INTEGER,
+            inFlightAt: undefined,
+            lastError: r.reason ?? 'retriable_error',
+          });
+          if (entityType === 'order') {
+            const order = await o.get(item.externalId);
+            if (order)
+              await o.put({ ...order, syncStatus: 'ERROR', updatedAt: Date.now() });
+          }
+          dead++;
+        } else {
+          const next = computeNextAttemptAt(nextRetry);
+          await q.put({
+            ...item,
+            status: 'RETRYABLE_ERROR',
+            inFlightAt: undefined,
+            retryCount: nextRetry,
+            nextAttemptAt: next,
+            lastError: r.reason ?? 'retriable_error',
+          });
+        }
+        continue;
+      }
+
       if (r.status === 'error') {
         const nextRetry = item.retryCount + 1;
         if (nextRetry > maxRetries) {
@@ -458,6 +504,22 @@ async function sendOneBatch(opts: {
             lastError: r.reason ?? 'error',
           });
         }
+        continue;
+      }
+
+      if (r.status === 'fatal_error') {
+        await q.put({
+          ...item,
+          status: 'FATAL_ERROR',
+          nextAttemptAt: Number.MAX_SAFE_INTEGER,
+          inFlightAt: undefined,
+          lastError: r.reason ?? 'fatal_error',
+        });
+        if (entityType === 'order') {
+          const order = await o.get(item.externalId);
+          if (order) await o.put({ ...order, syncStatus: 'ERROR', updatedAt: Date.now() });
+        }
+        dead++;
         continue;
       }
 

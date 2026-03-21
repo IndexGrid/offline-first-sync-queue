@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PosSyncService } from '../pos-sync.service';
 import { OrdersRepo } from '../orders.repo';
-import { SyncBatchRequest } from '@offline-pos/sync-contract';
+import { SyncBatchRequestTransport } from '@offline-pos/sync-contract';
 
 describe('PosSyncService', () => {
   let service: PosSyncService;
@@ -25,9 +25,19 @@ describe('PosSyncService', () => {
   });
 
   describe('syncBatch', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+    });
+
+    afterAll(() => {
+      process.env = originalEnv;
+    });
+
     it('should process valid orders successfully', async () => {
       const validUuid = '550e8400-e29b-41d4-a716-446655440000';
-      const input: SyncBatchRequest = {
+      const input: SyncBatchRequestTransport = {
         deviceId: 'pos-001',
         items: [
           {
@@ -50,13 +60,13 @@ describe('PosSyncService', () => {
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(ordersRepo.upsertByExternalId).toHaveBeenCalledWith(
         validUuid,
-        input.items[0].payload,
+        (input.items[0] as any).payload,
       );
     });
 
     it('should handle database errors per item', async () => {
       const validUuid = '550e8400-e29b-41d4-a716-446655440000';
-      const input: SyncBatchRequest = {
+      const input: SyncBatchRequestTransport = {
         deviceId: 'pos-001',
         items: [
           {
@@ -76,7 +86,7 @@ describe('PosSyncService', () => {
       expect(results).toHaveLength(1);
       expect(results[0]).toEqual({
         externalId: validUuid,
-        status: 'error',
+        status: 'retriable_error',
         reason: 'Database error',
       });
     });
@@ -85,7 +95,7 @@ describe('PosSyncService', () => {
       const validUuid1 = '550e8400-e29b-41d4-a716-446655440000';
       const validUuid2 = '660e8400-e29b-41d4-a716-446655440001';
 
-      const input: SyncBatchRequest = {
+      const input: SyncBatchRequestTransport = {
         deviceId: 'pos-001',
         items: [
           {
@@ -117,7 +127,7 @@ describe('PosSyncService', () => {
 
     it('should handle duplicate items', async () => {
       const validUuid = '550e8400-e29b-41d4-a716-446655440000';
-      const input: SyncBatchRequest = {
+      const input: SyncBatchRequestTransport = {
         deviceId: 'pos-001',
         items: [
           {
@@ -138,10 +148,9 @@ describe('PosSyncService', () => {
       });
     });
 
-    it('should handle invalid items', async () => {
-      // Note: validation usually happens in the Pipe, but the service should handle it if passed
+    it('should isolate invalid items and still process valid ones', async () => {
       const validUuid = '550e8400-e29b-41d4-a716-446655440000';
-      const input: SyncBatchRequest = {
+      const input: SyncBatchRequestTransport = {
         deviceId: 'pos-001',
         items: [
           {
@@ -149,19 +158,28 @@ describe('PosSyncService', () => {
             entityType: 'order',
             payload: { customer: 'John Doe', total: 20.0 },
           },
+          {
+            externalId: 'not-a-uuid',
+            entityType: 'order',
+            payload: { total: 1 },
+          },
         ],
       };
 
-      ordersRepo.upsertByExternalId.mockResolvedValue({ status: 'invalid' });
+      ordersRepo.upsertByExternalId.mockResolvedValue({ status: 'created' });
 
       const { results } = await service.syncBatch(input);
 
-      expect(results[0].status).toBe('invalid');
+      expect(results).toHaveLength(2);
+      expect(results[0]).toEqual({ externalId: validUuid, status: 'created' });
+      expect(results[1].status).toBe('invalid');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(ordersRepo.upsertByExternalId).toHaveBeenCalledTimes(1);
     });
 
-    it('should handle auth_required items', async () => {
+    it('should return auth_required for every item when api key is invalid', async () => {
       const validUuid = '550e8400-e29b-41d4-a716-446655440000';
-      const input: SyncBatchRequest = {
+      const input: SyncBatchRequestTransport = {
         deviceId: 'pos-001',
         items: [
           {
@@ -172,13 +190,14 @@ describe('PosSyncService', () => {
         ],
       };
 
-      ordersRepo.upsertByExternalId.mockResolvedValue({
-        status: 'auth_required',
-      });
+      process.env.SYNC_API_KEY = 'expected';
 
-      const { results } = await service.syncBatch(input);
+      const { results } = await service.syncBatch(input, 'wrong');
 
+      expect(results).toHaveLength(1);
       expect(results[0].status).toBe('auth_required');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(ordersRepo.upsertByExternalId).not.toHaveBeenCalled();
     });
   });
 });

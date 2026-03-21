@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PosSyncController } from '../pos-sync.controller';
 import { PosSyncService } from '../pos-sync.service';
-import { SyncBatchRequest } from '@offline-pos/sync-contract';
+import { SyncBatchRequestTransport } from '@offline-pos/sync-contract';
 
 describe('PosSyncController', () => {
   let controller: PosSyncController;
@@ -25,7 +25,7 @@ describe('PosSyncController', () => {
   });
 
   it('should call service.syncBatch with dto', async () => {
-    const dto: SyncBatchRequest = {
+    const dto: SyncBatchRequestTransport = {
       deviceId: 'dev-1',
       items: [],
     };
@@ -34,6 +34,6 @@ describe('PosSyncController', () => {
     await controller.sync(dto);
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(service.syncBatch).toHaveBeenCalledWith(dto);
+    expect(service.syncBatch).toHaveBeenCalledWith(dto, undefined);
   });
 });

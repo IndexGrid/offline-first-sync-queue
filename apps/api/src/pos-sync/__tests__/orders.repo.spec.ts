@@ -17,6 +17,7 @@ describe('OrdersRepo', () => {
               findUnique: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
+              findMany: jest.fn(),
             },
           },
         },
@@ -32,44 +33,94 @@ describe('OrdersRepo', () => {
     const payload = { foo: 'bar' };
 
     it('should create if not exists', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (prisma.order.findUnique as jest.Mock).mockResolvedValue(null);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       (prisma.order.create as jest.Mock).mockResolvedValue({} as any);
+      (prisma.order.update as jest.Mock).mockResolvedValue({} as any);
 
       const result = await repo.upsertByExternalId(externalId, payload);
 
       expect(result.status).toBe('created');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(prisma.order.create).toHaveBeenCalled();
+
+      const orderDelegate = prisma.order as unknown as Record<string, unknown>;
+      const createMock = orderDelegate['create'] as jest.Mock;
+      expect(createMock).toHaveBeenCalled();
     });
 
     it('should return duplicate if payload is identical', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (prisma.order.findUnique as jest.Mock).mockResolvedValue({
         payload,
+        retryCount: 0,
       } as any);
+      (prisma.order.update as jest.Mock).mockResolvedValue({} as any);
 
       const result = await repo.upsertByExternalId(externalId, payload);
 
       expect(result.status).toBe('duplicate');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(prisma.order.update).not.toHaveBeenCalled();
+
+      const orderDelegate = prisma.order as unknown as Record<string, unknown>;
+      const updateMock = orderDelegate['update'] as jest.Mock;
+      expect(updateMock).toHaveBeenCalledTimes(1);
     });
 
     it('should update if payload changed', async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       (prisma.order.findUnique as jest.Mock).mockResolvedValue({
         payload: { foo: 'old' },
+        retryCount: 0,
       } as any);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       (prisma.order.update as jest.Mock).mockResolvedValue({} as any);
 
       const result = await repo.upsertByExternalId(externalId, payload);
 
       expect(result.status).toBe('updated');
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      expect(prisma.order.update).toHaveBeenCalled();
+
+      const orderDelegate = prisma.order as unknown as Record<string, unknown>;
+      const updateMock = orderDelegate['update'] as jest.Mock;
+      expect(updateMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle create race by falling back to existing record', async () => {
+      (prisma.order.findUnique as jest.Mock)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ payload, retryCount: 0 } as any);
+      (prisma.order.create as jest.Mock).mockRejectedValue(new Error('unique'));
+      (prisma.order.update as jest.Mock).mockResolvedValue({} as any);
+
+      const result = await repo.upsertByExternalId(externalId, payload);
+
+      expect(result.status).toBe('duplicate');
+    });
+  });
+
+  describe('recoverStuckInFlight', () => {
+    it('should move stuck IN_FLIGHT to RETRYABLE_ERROR or DEAD_LETTER', async () => {
+      (prisma.order.findMany as jest.Mock).mockResolvedValue([
+        { externalId: 'a', retryCount: 0 },
+        { externalId: 'b', retryCount: 10 },
+      ]);
+      (prisma.order.update as jest.Mock).mockResolvedValue({} as any);
+
+      const recovered = await repo.recoverStuckInFlight({
+        staleAfterMs: 60_000,
+        maxRetries: 10,
+      });
+
+      expect(recovered).toBe(2);
+    });
+  });
+
+  describe('flushRetryableToSynced', () => {
+    it('should mark due retryable items as SYNCED', async () => {
+      (prisma.order.findMany as jest.Mock).mockResolvedValue([
+        { externalId: 'a' },
+        { externalId: 'b' },
+      ]);
+      (prisma.order.update as jest.Mock).mockResolvedValue({} as any);
+
+      const flushed = await repo.flushRetryableToSynced(50);
+
+      expect(flushed).toBe(2);
     });
   });
 });

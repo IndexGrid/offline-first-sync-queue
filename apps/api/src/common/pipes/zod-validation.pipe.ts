@@ -4,11 +4,14 @@ import {
   ArgumentMetadata,
   BadRequestException,
 } from '@nestjs/common';
-import type { ZodSchema } from 'zod';
+
+type ParseableSchema = {
+  parse: (value: unknown) => unknown;
+};
 
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private schema: ZodSchema) {}
+  constructor(private schema: ParseableSchema) {}
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   transform(value: unknown, metadata: ArgumentMetadata): unknown {
