@@ -25,6 +25,7 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:integration": "jest --config ./test/jest-integration.json",
+    "test:contract": "jest --config ./test/jest-contract.json",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {

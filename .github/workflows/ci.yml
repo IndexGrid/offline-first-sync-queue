@@ -78,6 +78,12 @@ jobs:
       - name: Backend - Integration Tests (Postgres)
         run: npm run test:integration -w apps/api
 
+      - name: Backend - Contract Tests
+        run: npm run test:contract -w apps/api
+
+      - name: Backend - E2E Tests
+        run: npm run test:e2e -w apps/api
+
       - name: Build All
         run: npm run build
 
