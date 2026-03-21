@@ -19,6 +19,7 @@ model Order {
   // Section 3.5: Sync status and retry fields with indexes
   syncStatus  String   @default("PENDING") @map("sync_status")
   retryCount  Int      @default(0) @map("retry_count")
+  nextAttemptAt DateTime? @map("next_attempt_at")
   lastError   String?  @map("last_error")
   
   createdAt   DateTime @default(now()) @map("created_at")
@@ -26,9 +27,50 @@ model Order {
 
   @@index([externalId])        // Section 3.6: idempotency key lookup
   @@index([syncStatus])        // Section 3.7: sync status lookup
+  @@index([nextAttemptAt])
+  @@index([syncStatus, nextAttemptAt])
   @@index([createdAt])         // Section 3.9: created/updated ordering
   @@index([updatedAt])
   @@map("orders")
+}
+
+enum SyncQueueStatus {
+  PENDING
+  IN_FLIGHT
+  SYNCED
+  RETRYABLE_ERROR
+  FATAL_ERROR
+  DEAD_LETTER
+}
+
+model SyncInboxItem {
+  id             String         @id @default(uuid())
+  deviceId        String         @map("device_id")
+  idempotencyKey  String         @unique @map("idempotency_key")
+  externalId      String         @map("external_id")
+  entityType      String         @map("entity_type")
+  payload         Json           @map("payload")
+
+  status          SyncQueueStatus @default(PENDING) @map("status")
+  retryCount      Int            @default(0) @map("retry_count")
+  nextAttemptAt   DateTime?      @map("next_attempt_at")
+  lastError       String?        @map("last_error")
+
+  lockedAt        DateTime?      @map("locked_at")
+  lockOwner       String?        @map("lock_owner")
+
+  resultStatus    String?        @map("result_status")
+  resultReason    String?        @map("result_reason")
+
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  @@index([idempotencyKey])
+  @@index([externalId])
+  @@index([status])
+  @@index([nextAttemptAt])
+  @@index([status, nextAttemptAt])
+  @@map("sync_inbox")
 }
 
 // Additional models can be added here following the same discipline.
