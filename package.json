@@ -23,6 +23,9 @@
     "@tailwindcss/oxide-win32-x64-msvc": "^4.0.0"
   },
   "scripts": {
+    "changes:check": "node tools/changes/check.mjs",
+    "changes:release-check": "node tools/changes/release-check.mjs",
+    "changes:release": "node tools/changes/release.mjs",
     "build": "npm run build -w packages/sync-contract && npm run build -w apps/api && npm run build -w apps/web",
     "test": "npm run test -w apps/api && npm run test -w apps/web",
     "test:cov": "npm run test:cov -w apps/api && npm run test -w apps/web",

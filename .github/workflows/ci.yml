@@ -32,6 +32,8 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/app
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -42,6 +44,10 @@ jobs:
         run: |
           rm -rf node_modules package-lock.json
           npm install
+
+      - name: Change Control Check (PR)
+        if: github.event_name == 'pull_request'
+        run: npm run changes:check
 
       - name: Build Shared Contract
         run: npm run build -w packages/sync-contract
@@ -95,6 +101,10 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Release Change Control Check
+        run: npm run changes:release-check
       - name: Create Release Draft
         uses: softprops/action-gh-release@v2
         with:

@@ -69,3 +69,4 @@ This directory contains the detailed documentation for the Offline-First POS Sys
 - [Architecture Decision Records (ADRs)](ADR/README.md)
 - [Local Development Guide](../README.md#local-development)
 - [CI/CD Pipeline](../.github/workflows/ci.yml)
+- [Release & Change Control](RELEASE.md)
