@@ -55,6 +55,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Migration Rollback Policy Check
+        run: npm run migrations:rollback-check
+
       - name: Backend - Test & Coverage
         run: npm run test:cov -w apps/api
 

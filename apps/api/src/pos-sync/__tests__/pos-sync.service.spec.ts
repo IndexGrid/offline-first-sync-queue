@@ -58,10 +58,10 @@ describe('PosSyncService', () => {
         status: 'created',
       });
       // eslint-disable-next-line @typescript-eslint/unbound-method
-      expect(ordersRepo.upsertByExternalId).toHaveBeenCalledWith(
-        validUuid,
-        (input.items[0] as any).payload,
-      );
+      expect(ordersRepo.upsertByExternalId).toHaveBeenCalledWith(validUuid, {
+        customer: 'John Doe',
+        total: 20.0,
+      });
     });
 
     it('should handle database errors per item', async () => {

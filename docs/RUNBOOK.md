@@ -12,6 +12,13 @@ docker-compose -f infra/docker-compose.yml up -d
 - **Deploy New Migrations**: `npx prisma migrate deploy -w apps/api`
 - **Reset DB (Dev only)**: `npx prisma migrate reset -w apps/api`
 
+### Migration Rollback Policy
+- Every migration directory in `apps/api/prisma/migrations/*` must include either:
+  - `rollback.sql` (preferred when a safe rollback exists), or
+  - `non_reversible.md` (when rollback is not feasible/safe).
+- CI enforces this policy via `npm run migrations:rollback-check`.
+- Prisma does not automatically execute rollbacks; `rollback.sql` is an explicit operational procedure.
+
 ## 📊 Monitoring & Observability
 
 ### Health Checks

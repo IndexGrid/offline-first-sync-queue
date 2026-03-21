@@ -27,6 +27,7 @@
     "test": "npm run test -w apps/api && npm run test -w apps/web",
     "test:cov": "npm run test:cov -w apps/api && npm run test -w apps/web",
     "lint": "npm run lint -w apps/api && npm run lint -w apps/web",
-    "typecheck": "npm run build -w packages/sync-contract && tsc --project apps/api/tsconfig.json --noEmit && tsc --project apps/web/tsconfig.json --noEmit"
+    "typecheck": "npm run build -w packages/sync-contract && tsc --project apps/api/tsconfig.json --noEmit && tsc --project apps/web/tsconfig.json --noEmit",
+    "migrations:rollback-check": "node tools/check-migration-reversibility.mjs"
   }
 }
