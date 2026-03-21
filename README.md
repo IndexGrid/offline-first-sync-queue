@@ -51,11 +51,11 @@ npm run dev -w apps/web
 ```
 
 ## 📊 Observability
-- **Backend Logs**: Structured Winston logs with request correlation.
+- **Backend Logs**: Structured logs via NestJS Logger.
 - **Frontend Telemetry**: Real-time sync queue depth and status distribution signals.
 
 ## 📄 Documentation
-- [Technical Guide](AI-Driven-Implementation-technical-guide.md)
+- [Technical Guide](AI-Driven-Implementation-technical-guide%20(1).md)
 - [Architecture Decision Records (ADRs)](docs/ADR/README.md)
 - [Project Documentation](docs/README.md)
 
