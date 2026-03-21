@@ -151,7 +151,8 @@ export class OrdersRepo {
         externalId,
         previousRetryCount: existingRetryCount,
         maxRetries,
-        reason: error instanceof Error ? error.message : 'internal_server_error',
+        reason:
+          error instanceof Error ? error.message : 'internal_server_error',
       });
       throw error;
     }
